@@ -1,0 +1,14 @@
+{
+  "name": "ravencoin-mock-server",
+  "version": "1.0.0",
+  "description": "Mock JSON-RPC server for the Ravencoin API",
+  "main": "index.js",
+  "scripts": {
+    "mock-server": "open-rpc-mock-server"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@open-rpc/mock-server": "^1.7.1"
+  }
+}

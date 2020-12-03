@@ -1,0 +1,109 @@
+{
+  "openrpc": "1.0.0",
+  "info": {
+    "version": "1.0.10",
+    "title": "Ravencoin JSON-RPC",
+    "description": "This API lets you interact with ravencoind via JSON-RPC",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "methods": [
+    {
+      "name": "verifymessage",
+      "params": [
+        {
+          "name": "address",
+          "description": "Public address to use for the signature",
+          "schema": {
+            "title": "address",
+            "type": "string"
+          }
+        },
+        {
+          "name": "signature",
+          "description": "The signature provided by the signer in base 64 encoding (see signmessage).",
+          "schema": {
+            "title": "signature",
+            "type": "string"
+          }
+        },
+        {
+          "name": "message",
+          "description": "The message that was signed.",
+          "schema": {
+            "title": "message",
+            "type": "string"
+          }
+        }
+      ],
+      "result": {
+        "name": "verified",
+        "description": "Whether or not the signature is verified",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      "examples": [
+        {
+          "name": "validate example",
+          "params": [
+            {
+              "name": "address",
+              "value": "1111"
+            },
+            {
+              "name": "signature",
+              "value": "abcd"
+            },
+            {
+              "name": "candidate",
+              "value": "JOHN DOE"
+            }
+          ],
+          "result": {
+            "name": "verified",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "getbalance",
+      "params": [
+        {
+          "name": "address",
+          "description": "Public address to get the balance for",
+          "schema": {
+            "title": "address",
+            "type": "string"
+          }
+        }
+      ],
+      "result": {
+        "name": "balance",
+        "description": "The balance of the given address",
+        "schema": {
+          "title": "balance",
+          "type": "number"
+        }
+      },
+      "examples": [
+        {
+          "name": "balance example",
+          "params": [
+            {
+              "name": "address",
+              "value": "1111"
+            }
+          ],
+          "result": {
+            "name": "balance",
+            "value": "22.22"
+          }
+        }
+      ]
+    }
+  ]
+}
