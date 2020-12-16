@@ -78,16 +78,18 @@ struct BlockchainService {
     }
     
     func getBalance(address: String) -> EventLoopFuture<Double> {
-        encodeRequest(method: .getBalance, params: RPCObject(address))
+        encodeRequest(method: .getBalance, params: RPCObject([address]))
             .map { result in
                 switch result {
                 case .success(let response):
                     switch response {
+                    case .string(let value):
+                        return Double(value) ?? 0.0
                     case .double(let value):
                         return value
                     default:
                         print(response)
-                        return 0
+                        return 0.0
                     }
                 case .failure(let error):
                     print(error.localizedDescription)

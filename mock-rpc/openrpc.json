@@ -11,6 +11,41 @@
   },
   "methods": [
     {
+      "name": "getbalance",
+      "params": [
+        {
+          "name": "address",
+          "description": "Public address to get the balance for",
+          "schema": {
+            "title": "address",
+            "type": "string"
+          }
+        }
+      ],
+      "result": {
+        "name": "balance",
+        "description": "The balance of the given address",
+        "schema": {
+          "type": "number"
+        }
+      },
+      "examples": [
+        {
+          "name": "balance example",
+          "params": [
+            {
+              "name": "address",
+              "value": "1111"
+            }
+          ],
+          "result": {
+            "name": "balance",
+            "value": 22.22
+          }
+        }
+      ]
+    },
+    {
       "name": "verifymessage",
       "params": [
         {
@@ -65,42 +100,6 @@
           "result": {
             "name": "verified",
             "value": true
-          }
-        }
-      ]
-    },
-    {
-      "name": "getbalance",
-      "params": [
-        {
-          "name": "address",
-          "description": "Public address to get the balance for",
-          "schema": {
-            "title": "address",
-            "type": "string"
-          }
-        }
-      ],
-      "result": {
-        "name": "balance",
-        "description": "The balance of the given address",
-        "schema": {
-          "title": "balance",
-          "type": "number"
-        }
-      },
-      "examples": [
-        {
-          "name": "balance example",
-          "params": [
-            {
-              "name": "address",
-              "value": "1111"
-            }
-          ],
-          "result": {
-            "name": "balance",
-            "value": "22.22"
           }
         }
       ]
