@@ -20,6 +20,24 @@
         }
       },
       {
+        "package": "Base58Swift",
+        "repositoryURL": "https://github.com/a2hill/Base58Swift.git",
+        "state": {
+          "branch": "master",
+          "revision": "06f76ebb80c155a56b1f495a9ae2063b5e983862",
+          "version": null
+        }
+      },
+      {
+        "package": "BigInt",
+        "repositoryURL": "https://github.com/attaswift/BigInt.git",
+        "state": {
+          "branch": null,
+          "revision": "889a1ecacd73ccc189c5cb29288048f186c44ed9",
+          "version": "5.2.1"
+        }
+      },
+      {
         "package": "console-kit",
         "repositoryURL": "https://github.com/vapor/console-kit.git",
         "state": {
