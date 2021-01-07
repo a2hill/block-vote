@@ -10,7 +10,10 @@ import Vapor
 
 struct CandidateController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        let candidates = routes.grouped("candidates")
+        let candidates = routes
+            .grouped("candidates")
+            .grouped(VoteMiddleware())
+        
         candidates.get(use: index)
         candidates.group([SignatureAuthenticator(), AdminMiddleware(administrators: ["1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"])]) { protected in
             protected.post(use: create)

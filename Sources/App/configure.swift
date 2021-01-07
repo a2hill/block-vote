@@ -19,13 +19,6 @@ public func configure(_ app: Application) throws {
     app.migrations.add(CreateVote())
     app.migrations.add(CreateCandidate())
     app.views.use(.leaf)
-    
-    switch app.environment {
-    case .development:
-        app.administrationConfiguration = .init(administratorAddresses: ["1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"])
-    default:
-        break
-    }
 
     // register routes
     try routes(app)

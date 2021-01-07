@@ -12,9 +12,9 @@ import Foundation
 
 struct VoteController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        let vote = routes.grouped("vote")
+        let vote = routes.grouped("vote").grouped(VoteMiddleware())
         vote.get(use: index)
-        vote.group([SignatureAuthenticator(), VoteRequest.guardMiddleware()]) { protected in
+        vote.group([SignatureAuthenticator(), VoteRequest.guardMiddleware(throwing: Abort(.unauthorized, reason: "Address, message, and signature do not match"))]) { protected in
             protected.post(use: create)
         }
     }
