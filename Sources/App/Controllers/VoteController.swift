@@ -14,7 +14,9 @@ struct VoteController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let vote = routes.grouped("vote")
         vote.get(use: index)
-        vote.post(use: create)
+        vote.group([SignatureAuthenticator(), VoteRequest.guardMiddleware()]) { protected in
+            protected.post(use: create)
+        }
     }
 
     func index(req: Request) throws -> EventLoopFuture<[Vote]> {
@@ -22,14 +24,10 @@ struct VoteController: RouteCollection {
     }
 
     func create(req: Request) throws -> EventLoopFuture<Vote> {
-        try VoteRequest.validate(content: req)
-        let voteRequest = try req.content.decode(VoteRequest.self)
-        let countedVote = req.blockchain.validateMessage(address: voteRequest.id!, signature: voteRequest.signature, message: voteRequest.candidate)
-            .guard({$0 == true },
-                   else: Abort(.badRequest, reason: "Signature does not validate for given message and address"))
-            .flatMap { _ in
-                return req.blockchain.getBalance(address: voteRequest.id!)
-            }.map { balance -> Vote in
+        
+        let voteRequest = try req.auth.require(VoteRequest.self)
+        let countedVote = req.blockchain.getBalance(address: voteRequest.id!)
+            .map { balance -> Vote in
                 return Vote(voteRequest, quantity: balance)
             }
 //            .flatMap { vote in
