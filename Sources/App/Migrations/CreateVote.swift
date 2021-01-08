@@ -10,8 +10,7 @@ import Fluent
 struct CreateVote: Migration {
     func prepare(on database: Database) -> EventLoopFuture<Void> {
         return database.schema("vote")
-            .id()
-            .field("address", .string, .required)
+            .field("address", .string, .identifier(auto: false), .required)
             .field("signature", .string, .required)
             .field("candidate", .string, .required)
             .field("quantity", .double, .required)

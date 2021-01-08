@@ -18,6 +18,7 @@ public func configure(_ app: Application) throws {
     
     app.migrations.add(CreateVote())
     app.migrations.add(CreateCandidate())
+    try app.autoMigrate().wait()
     app.views.use(.leaf)
 
     // register routes

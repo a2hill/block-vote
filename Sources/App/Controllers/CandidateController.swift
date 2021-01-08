@@ -43,8 +43,8 @@ struct CandidateController: RouteCollection {
                 $0 == nil
             }, else: Abort(.notModified, reason: "Candidate already exists"))
             .flatMap { _ in
-                Candidate(name: voteRequest.candidate).save(on: req.db)
-            }.transform(to: .created)
+                Candidate(name: voteRequest.candidate).save(on: req.db)}
+            .transform(to: .created)
     }
 
     func delete(req: Request) throws -> EventLoopFuture<HTTPStatus> {

@@ -9,7 +9,6 @@ import Fluent
 import Vapor
 
 final class Vote: Model, Content, Equatable {
-    
     static let schema = "vote"
     
     @ID(custom: "address", generatedBy: .user)

@@ -31,11 +31,24 @@
       },
       "examples": [
         {
-          "name": "balance example",
+          "name": "regular balance example",
           "params": [
             {
               "name": "address",
               "value": "1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"
+            }
+          ],
+          "result": {
+            "name": "balance",
+            "value": 22.22
+          }
+        },
+        {
+          "name": "admin balance example",
+          "params": [
+            {
+              "name": "address",
+              "value": "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX"
             }
           ],
           "result": {
@@ -82,11 +95,32 @@
       },
       "examples": [
         {
-          "name": "validate example",
+          "name": "admin validate example",
           "params": [
             {
               "name": "address",
               "value": "1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"
+            },
+            {
+              "name": "signature",
+              "value": "abcd"
+            },
+            {
+              "name": "candidate",
+              "value": "JOHN DOE"
+            }
+          ],
+          "result": {
+            "name": "verified",
+            "value": true
+          }
+        },
+        {
+          "name": "regular validate example",
+          "params": [
+            {
+              "name": "address",
+              "value": "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX"
             },
             {
               "name": "signature",

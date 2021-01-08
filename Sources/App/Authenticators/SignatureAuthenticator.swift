@@ -9,6 +9,7 @@ import Vapor
 
 
 struct SignatureAuthenticator: CredentialsAuthenticator {
+    
     typealias Credentials = VoteRequest
     
     func authenticate(credentials: Credentials, for request: Request) -> EventLoopFuture<Void> {
