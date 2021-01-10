@@ -48,7 +48,7 @@ struct CandidateController: RouteCollection {
     }
 
     func delete(req: Request) throws -> EventLoopFuture<HTTPStatus> {
-        return Todo.find(req.parameters.get("candidateID"), on: req.db)
+        return Candidate.find(req.parameters.get("candidateID"), on: req.db)
             .unwrap(or: Abort(.notFound))
             .flatMap { $0.delete(on: req.db) }
             .transform(to: .ok)
