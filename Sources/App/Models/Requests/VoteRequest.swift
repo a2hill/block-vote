@@ -28,3 +28,11 @@ final class VoteRequest: Model, Content, Authenticatable {
         self.candidate = candidate
     }
 }
+
+extension VoteRequest: Validatable {
+    static func validations(_ validations: inout Validations) {
+        validations.add("signature", as: String.self, is: .alphanumeric)
+        validations.add("candidate", as: String.self, is: .candidate)
+        validations.add("id", as: String.self, is: .address)
+    }
+}

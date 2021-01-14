@@ -117,4 +117,32 @@ final class AppTests: XCTestCase {
             XCTAssertEqual(res.status, .notModified)
         })
     }
+    
+    func testDeleteCandidateUnauthorized() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        
+        try app.test(.DELETE, "candidates", beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, .unauthorized)
+        })
+    }
+    
+    func testDeleteCandidate() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = VoteRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        
+        try app.test(.DELETE, "candidates", beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, .noContent)
+        })
+    }
 }

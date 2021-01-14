@@ -13,25 +13,34 @@ struct VoteController: RouteCollection {
             .grouped("votes")
             .grouped(VoteMiddleware())
         
-        vote.get(use: index)
+        // Get
+        vote.get(use: list)
+        
+        // Create
         vote.group([SignatureAuthenticator(), VoteRequest.guardMiddleware(throwing: Abort(.unauthorized, reason: "Address, message, and signature do not match"))]) { protected in
             protected.post(use: create)
         }
     }
 
-    func index(req: Request) throws -> EventLoopFuture<[Vote]> {
+    func list(req: Request) throws -> EventLoopFuture<[Vote]> {
         return Vote.query(on: req.db).all()
     }
 
     func create(req: Request) throws -> EventLoopFuture<Vote> {
         
         let voteRequest = try req.auth.require(VoteRequest.self)
+        
         let countedVote = req.blockchain.getBalance(address: voteRequest.id!)
-            .map { balance -> Vote in
-                return Vote(voteRequest, quantity: balance)
-            }
-            .flatMap { vote in
-                return vote.save(on: req.db).map { vote }
+            .and(Vote.find(voteRequest.id!, on: req.db))
+            .flatMap { (balance: Double, existingVote: Vote?) -> EventLoopFuture<Vote> in
+                // Vote already exists. Changing candidate.
+                if let existingVote = existingVote {
+                    existingVote.candidate = voteRequest.candidate
+                    return existingVote.update(on: req.db).transform(to: existingVote)
+                }else {
+                    let newVote = Vote(voteRequest, quantity: balance)
+                    return newVote.save(on: req.db).transform(to: newVote)
+                }
             }
         
         return countedVote
