@@ -30,7 +30,11 @@ struct VoteController: RouteCollection {
         
         let voteRequest = try req.auth.require(VoteRequest.self)
         
-        let countedVote = req.blockchain.getBalance(address: voteRequest.id!)
+        let countedVote = try CanidateLogic.getCandidateBy(name: voteRequest.candidate, db: req.db)
+            .unwrap(or: Abort(.notFound, reason: "candidate does not exist"))
+            .flatMap { _ in
+                req.blockchain.getBalance(address: voteRequest.id!)
+            }
             .and(Vote.find(voteRequest.id!, on: req.db))
             .flatMap { (balance: Double, existingVote: Vote?) -> EventLoopFuture<Vote> in
                 // Vote already exists. Changing candidate.
@@ -44,12 +48,5 @@ struct VoteController: RouteCollection {
             }
         
         return countedVote
-    }
-
-    func delete(req: Request) throws -> EventLoopFuture<HTTPStatus> {
-        return Candidate.find(req.parameters.get("todoID"), on: req.db)
-            .unwrap(or: Abort(.notFound))
-            .flatMap { $0.delete(on: req.db) }
-            .transform(to: .ok)
     }
 }

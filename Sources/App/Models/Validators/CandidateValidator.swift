@@ -8,5 +8,5 @@
 import Vapor
 
 extension Validator where T == String {
-    public static var candidate: Validator = .characterSet(.uppercaseLetters + .whitespaces)
+    public static var candidate: Validator = .characterSet(.uppercaseLetters + .whitespaces) && !.empty
 }

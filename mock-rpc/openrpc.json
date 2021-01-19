@@ -135,6 +135,27 @@
             "name": "verified",
             "value": true
           }
+        },
+        {
+          "name": "empty validate example",
+          "params": [
+            {
+              "name": "address",
+              "value": "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX"
+            },
+            {
+              "name": "signature",
+              "value": "abcd"
+            },
+            {
+              "name": "candidate",
+              "value": ""
+            }
+          ],
+          "result": {
+            "name": "verified",
+            "value": true
+          }
         }
       ]
     }

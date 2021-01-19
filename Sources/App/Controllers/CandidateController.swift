@@ -60,3 +60,12 @@ struct CandidateController: RouteCollection {
         return candidate
     }
 }
+
+struct CanidateLogic {
+    static func getCandidateBy(name: String, db: Database) throws -> EventLoopFuture<Candidate?> {
+        let candidate =  Candidate.query(on: db)
+            .filter(\.$name == name)
+            .first()
+        return candidate
+    }
+}

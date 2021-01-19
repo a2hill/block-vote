@@ -11,26 +11,37 @@ final class AppTests: XCTestCase {
     let BAD_CANDIDATE_SYMBOLS = "JOHN_DOE"
     let BAD_CANDIDATE_NUMBERS = "J0HN D0E"
     let BAD_CANDIDATE_LOWERCASE = "john doe"
+    let NO_CANDIDATE = ""
     
     let QUANTITY = 22.22
     
     
     // Requires running `npm run mock-servernode --verion` first. node ~v10.15.0
-    func testVote() throws {
+    func testVoteCandidateDoesNotExist() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
         try! configure(app)
         
-        
         let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
-        let voteResponse = Vote(voteRequest, quantity: QUANTITY)
         
         try app.test(.POST, "votes", beforeRequest: { req in
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
-            XCTAssertEqual(res.status, .ok)
-            let returnedVote = try res.content.decode(Vote.self)
-            XCTAssertEqual(returnedVote, voteResponse)
+            XCTAssertEqual(res.status, .notFound)
+        })
+    }
+    
+    func testVoteEmptyCandidate() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: NO_CANDIDATE)
+        
+        try app.test(.POST, "votes", beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, HTTPStatus.badRequest)
         })
     }
     
@@ -115,6 +126,24 @@ final class AppTests: XCTestCase {
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .notModified)
+        })
+    }
+    
+    // Requires running `npm run mock-servernode --verion` first. node ~v10.15.0
+    func testVoteSuccess() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let voteResponse = Vote(voteRequest, quantity: QUANTITY)
+        
+        try app.test(.POST, "votes", beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, .ok)
+            let returnedVote = try res.content.decode(Vote.self)
+            XCTAssertEqual(returnedVote, voteResponse)
         })
     }
     
