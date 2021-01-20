@@ -6,6 +6,7 @@
 //
 
 import Vapor
+import Fluent
 
 struct VoteController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
@@ -15,6 +16,9 @@ struct VoteController: RouteCollection {
         
         // Get
         vote.get(use: list)
+        vote.group(":candidate") { candidate in
+            candidate.get(use: getAllVotesForCandidate)
+        }
         
         // Create
         vote.group([SignatureAuthenticator(), VoteRequest.guardMiddleware(throwing: Abort(.unauthorized, reason: "Address, message, and signature do not match"))]) { protected in
@@ -30,7 +34,7 @@ struct VoteController: RouteCollection {
         
         let voteRequest = try req.auth.require(VoteRequest.self)
         
-        let countedVote = try CanidateLogic.getCandidateBy(name: voteRequest.candidate, db: req.db)
+        let countedVote = try CanidateLogic.getCandidate(by: voteRequest.candidate, db: req.db)
             .unwrap(or: Abort(.notFound, reason: "candidate does not exist"))
             .flatMap { _ in
                 req.blockchain.getBalance(address: voteRequest.id!)
@@ -48,5 +52,20 @@ struct VoteController: RouteCollection {
             }
         
         return countedVote
+    }
+    
+    func getAllVotesForCandidate(req: Request) throws -> EventLoopFuture<[Vote]> {
+        let candidateName = req.parameters.get("id")!
+        let candidate = Candidate.query(on: req.db)
+            .filter(\.$id == candidateName)
+            .field(\.$id)
+            .first()
+            .unwrap(or: Abort(.notFound, reason: "Candidate does not exist"))
+        
+        let votes = candidate.flatMap { _ in
+            Vote.query(on: req.db).filter(\.$candidate == candidateName).all()
+        }
+        
+        return votes
     }
 }

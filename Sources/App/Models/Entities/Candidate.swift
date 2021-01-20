@@ -11,17 +11,13 @@ import Vapor
 final class Candidate: Model, Content {
     static let schema = "candidates"
     
-    @ID(key: .id)
-    var id: UUID?
-
-    @Field(key: "name")
-    var name: String
+    @ID(custom: "name", generatedBy: .user)
+    var id: String?
 
     init() { }
 
-    init(id: UUID? = nil, name: String) {
-        self.id = id
-        self.name = name
+    init(name: String? = nil) {
+        self.id = name
     }
 }
 
