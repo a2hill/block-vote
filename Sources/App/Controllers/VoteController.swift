@@ -12,22 +12,24 @@ struct VoteController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let vote = routes
             .grouped("votes")
-            .grouped(VoteMiddleware())
         
         // Get
-        vote.get(use: list)
+        vote.get(use: listVotes)
         vote.group(":candidate") { candidate in
+            candidate.group("sum") { action in
+                action.get(use: sumAllVotesForCandidate)
+            }
             candidate.get(use: getAllVotesForCandidate)
         }
         
         // Create
-        vote.group([SignatureAuthenticator(), VoteRequest.guardMiddleware(throwing: Abort(.unauthorized, reason: "Address, message, and signature do not match"))]) { protected in
+        vote.group([VoteMiddleware(), SignatureAuthenticator(), VoteRequest.guardMiddleware(throwing: Abort(.unauthorized, reason: "Address, message, and signature do not match"))]) { protected in
             protected.post(use: create)
         }
     }
 
-    func list(req: Request) throws -> EventLoopFuture<[Vote]> {
-        return Vote.query(on: req.db).all()
+    func listVotes(req: Request) throws -> EventLoopFuture<Page<Vote>> {
+        return Vote.query(on: req.db).paginate(for: req)
     }
 
     func create(req: Request) throws -> EventLoopFuture<Vote> {
@@ -45,27 +47,39 @@ struct VoteController: RouteCollection {
                 if let existingVote = existingVote {
                     existingVote.candidate = voteRequest.candidate
                     return existingVote.update(on: req.db).transform(to: existingVote)
-                }else {
-                    let newVote = Vote(voteRequest, quantity: balance)
-                    return newVote.save(on: req.db).transform(to: newVote)
                 }
+                
+                let newVote = Vote(voteRequest, quantity: balance)
+                return newVote.save(on: req.db).transform(to: newVote)
             }
         
         return countedVote
     }
     
     func getAllVotesForCandidate(req: Request) throws -> EventLoopFuture<[Vote]> {
-        let candidateName = req.parameters.get("id")!
-        let candidate = Candidate.query(on: req.db)
-            .filter(\.$id == candidateName)
-            .field(\.$id)
-            .first()
+        let candidateName = req.parameters.get("candidate")!
+        let candidate = try CanidateLogic.getCandidate(by: candidateName, db: req.db)
             .unwrap(or: Abort(.notFound, reason: "Candidate does not exist"))
         
         let votes = candidate.flatMap { _ in
             Vote.query(on: req.db).filter(\.$candidate == candidateName).all()
         }
-        
         return votes
+    }
+    
+    func sumAllVotesForCandidate(req: Request) throws -> EventLoopFuture<String> {
+        let candidateName = req.parameters.get("candidate")!
+        let candidate = try CanidateLogic.getCandidate(by: candidateName, db: req.db)
+            .unwrap(or: Abort(.notFound, reason: "Candidate does not exist"))
+        
+        let voteCount = candidate.flatMap { _ in
+            Vote.query(on: req.db).filter(\.$candidate == candidateName).sum(\.$quantity)
+                .unwrap(orReplace: 0.0)
+                .map { value in
+                    String(value)
+                }
+        }
+        
+        return voteCount
     }
 }

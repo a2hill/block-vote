@@ -1,5 +1,7 @@
 @testable import App
 import XCTVapor
+import Fluent
+import Vapor
 
 final class AppTests: XCTestCase {
     
@@ -15,6 +17,23 @@ final class AppTests: XCTestCase {
     
     let QUANTITY = 22.22
     
+    override func setUp() {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        try! deleteVotes(on: app.db)
+        try! deleteCandidates(on: app.db)
+    }
+    
+    override func tearDown() {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        try! deleteVotes(on: app.db)
+        try! deleteCandidates(on: app.db)
+    }
     
     // Requires running `npm run mock-servernode --verion` first. node ~v10.15.0
     func testVoteCandidateDoesNotExist() throws {
@@ -87,53 +106,13 @@ final class AppTests: XCTestCase {
         })
     }
     
-    func testAddCandidateUnauthorized() throws {
-        let app = Application(.testing)
-        defer { app.shutdown() }
-        try! configure(app)
-        
-        let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
-        
-        try app.test(.POST, "candidates", beforeRequest: { req in
-            try req.content.encode(voteRequest)
-        }, afterResponse: { res in
-            XCTAssertEqual(res.status, HTTPStatus.unauthorized)
-        })
-    }
-    
-    func testAddCandidate() throws {
-        let app = Application(.testing)
-        defer { app.shutdown() }
-        try! configure(app)
-        
-        let voteRequest = VoteRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
-        
-        try app.test(.POST, "candidates", beforeRequest: { req in
-            try req.content.encode(voteRequest)
-        }, afterResponse: { res in
-            XCTAssertEqual(res.status, .created)
-        })
-    }
-    
-    func testAddDuplicateCandidate() throws {
-        let app = Application(.testing)
-        defer { app.shutdown() }
-        try! configure(app)
-        
-        let voteRequest = VoteRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
-        
-        try app.test(.POST, "candidates", beforeRequest: { req in
-            try req.content.encode(voteRequest)
-        }, afterResponse: { res in
-            XCTAssertEqual(res.status, .notModified)
-        })
-    }
-    
     // Requires running `npm run mock-servernode --verion` first. node ~v10.15.0
     func testVoteSuccess() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
         try! configure(app)
+        
+        try! createCandidate(on: app.db, named: CANDIDATE)
         
         let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         let voteResponse = Vote(voteRequest, quantity: QUANTITY)
@@ -147,31 +126,130 @@ final class AppTests: XCTestCase {
         })
     }
     
-    func testDeleteCandidateUnauthorized() throws {
+    func testVoteUpdate() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        // Create original vote
+        let originalCandidate = "ORIGINAL CANDIDATE"
+        try! createCandidate(on: app.db, named:originalCandidate)
+        try! createVote(on: app.db, from: REGULAR_ADDRESS, for: originalCandidate, with: QUANTITY)
         
-        try app.test(.DELETE, "candidates", beforeRequest: { req in
+        // Create new candidate
+        try! createCandidate(on: app.db, named: CANDIDATE)
+        
+        // Update vote
+        let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let voteResponse = Vote(voteRequest, quantity: QUANTITY)
+        
+        try app.test(.POST, "votes", beforeRequest: { req in
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
-            XCTAssertEqual(res.status, .unauthorized)
+            let returnedVote = try res.content.decode(Vote.self)
+            XCTAssertEqual(returnedVote, voteResponse)
         })
     }
     
-    func testDeleteCandidate() throws {
+    func testListVotes() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = VoteRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let votes = try createVotes(on: app.db, for: CANDIDATE)
+        try app.test(.GET, "votes") { res in
+            XCTAssertEqual(res.status, .ok)
+            let returnedVotes = try res.content.decode(Page<Vote>.self)
+            XCTAssertEqual(returnedVotes.items, votes)
+         }
         
-        try app.test(.DELETE, "candidates", beforeRequest: { req in
-            try req.content.encode(voteRequest)
-        }, afterResponse: { res in
-            XCTAssertEqual(res.status, .noContent)
-        })
+        try deleteVotes(on: app.db)
+    }
+    
+    func testListVotesForCandidate() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        try createCandidate(on: app.db, named: CANDIDATE)
+        let votes = try createVotes(on: app.db, for: CANDIDATE)
+        try app.test(.GET, "votes/JOHN%20DOE") { res in
+            XCTAssertEqual(res.status, .ok)
+            let listedVotes = try! res.content.decode([Vote].self)
+            
+            XCTAssertEqual(votes, listedVotes)
+         }
+    }
+    
+    func testListVotesForNonExistantCandidate() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        try app.test(.GET, "votes/JOHN%20DOE") { res in
+            XCTAssertEqual(res.status, .notFound)
+         }
+    }
+    
+    func testSumVotes() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        try createCandidate(on: app.db, named: CANDIDATE)
+        let votes = try createVotes(on: app.db, for: CANDIDATE)
+        try app.test(.GET, "votes/JOHN%20DOE/sum") { res in
+            XCTAssertEqual(res.status, .ok)
+            let count = Double(res.body.string)
+            let voteTotal = votes.reduce(0.0) { $0 + $1.quantity }
+            XCTAssertEqual(count, voteTotal)
+         }
+    }
+    
+    func testSumVotesForNonExistantCandidate() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        try app.test(.GET, "votes/JOHN%20DOE/sum") { res in
+            XCTAssertEqual(res.status, .notFound)
+         }
+    }
+    
+    
+    
+    func createCandidate(on db: Database, named name: String) throws {
+        try Candidate(name: name).create(on: db).wait()
+    }
+
+    func deleteCandidates(on db: Database) throws {
+        _ = try! Candidate.query(on: db).all()
+            .map {
+                $0.delete(on: db)
+            }
+            .wait()
+    }
+    
+    func createVote(on db: Database, from address: String, for candidate: String, with quantity: Double ) throws {
+        let vote = Vote(id: address, signature: SIGNATURE, candidate: candidate, quantity: quantity)
+        try! vote.save(on: db).wait()
+    }
+    
+    func createVotes(on db: Database, for candidate: String) throws -> [Vote] {
+        let votes = [
+            Vote(id: "1234", signature: "abcd", candidate: candidate, quantity: 10),
+            Vote(id: "4567", signature: "abcd", candidate: candidate, quantity: 10),
+            Vote(id: "890", signature: "abcd", candidate: candidate, quantity: 10)
+        ]
+        _ = try! votes.create(on: db).wait()
+        return votes
+    }
+    
+    func deleteVotes(on db: Database) throws {
+        _ = try! Vote.query(on: db).all()
+            .map {
+                $0.delete(on: db)
+            }
+            .wait()
     }
 }

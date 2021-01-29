@@ -15,7 +15,7 @@ struct CandidateController: RouteCollection {
             .grouped(VoteMiddleware())
         
         // Get
-        candidates.get(use: index)
+        candidates.get(use: listAllCandidates)
         
         // Admin required
         candidates.group([SignatureAuthenticator(), AdminMiddleware(administrators: ["1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"])]) { protected in
@@ -24,7 +24,7 @@ struct CandidateController: RouteCollection {
         }
     }
     
-    func index(req: Request) throws -> EventLoopFuture<[Candidate]> {
+    func listAllCandidates(req: Request) throws -> EventLoopFuture<[Candidate]> {
         return Candidate.query(on: req.db).all()
     }
 
@@ -46,11 +46,6 @@ struct CandidateController: RouteCollection {
             $0.delete(on: req.db)
         }.transform(to: .noContent)
     }
-    
-//    func getCandidate(req: Request) throws -> EventLoopFuture<Candidate?> {
-//        let voteRequest = try req.auth.require(VoteRequest.self)
-//        return Candidate.query(on: req..db).filter(\.$id == voteRequest.candidate).first()
-//    }
 }
 
 struct CanidateLogic {
