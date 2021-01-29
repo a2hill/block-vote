@@ -8,7 +8,7 @@
 import Fluent
 import Vapor
 
-final class Vote: Model, Content, Equatable {
+final class Vote: Model, Content {
     static let schema = "vote"
     
     @ID(custom: "address", generatedBy: .user)
@@ -35,7 +35,9 @@ final class Vote: Model, Content, Equatable {
         self.candidate = candidate
         self.quantity = quantity
     }
-    
+}
+
+extension Vote: Equatable {
     static func == (lhs: Vote, rhs: Vote) -> Bool {
         return lhs.id == rhs.id &&
         lhs.signature == rhs.signature &&

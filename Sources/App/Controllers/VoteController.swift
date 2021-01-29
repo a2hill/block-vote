@@ -56,13 +56,13 @@ struct VoteController: RouteCollection {
         return countedVote
     }
     
-    func getAllVotesForCandidate(req: Request) throws -> EventLoopFuture<[Vote]> {
+    func getAllVotesForCandidate(req: Request) throws -> EventLoopFuture<Page<Vote>> {
         let candidateName = req.parameters.get("candidate")!
         let candidate = try CanidateLogic.getCandidate(by: candidateName, db: req.db)
             .unwrap(or: Abort(.notFound, reason: "Candidate does not exist"))
         
         let votes = candidate.flatMap { _ in
-            Vote.query(on: req.db).filter(\.$candidate == candidateName).all()
+            Vote.query(on: req.db).filter(\.$candidate == candidateName).paginate(for: req)
         }
         return votes
     }

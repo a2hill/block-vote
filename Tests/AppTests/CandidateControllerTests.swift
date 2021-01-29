@@ -31,20 +31,6 @@ class CandidateControllerTests: XCTestCase {
         try! deleteCandidates(on: app.db)
     }
     
-    func testAddCandidateUnauthorized() throws {
-        let app = Application(.testing)
-        defer { app.shutdown() }
-        try! configure(app)
-        
-        let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
-        
-        try app.test(.POST, "candidates", beforeRequest: { req in
-            try req.content.encode(voteRequest)
-        }, afterResponse: { res in
-            XCTAssertEqual(res.status, HTTPStatus.unauthorized)
-        })
-    }
-    
     func testAddCandidate() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
@@ -56,6 +42,20 @@ class CandidateControllerTests: XCTestCase {
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .created)
+        })
+    }
+    
+    func testAddCandidateUnauthorized() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        
+        try app.test(.POST, "candidates", beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, HTTPStatus.unauthorized)
         })
     }
     
@@ -72,6 +72,22 @@ class CandidateControllerTests: XCTestCase {
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .notModified)
+        })
+    }
+    
+    func testDeleteCandidate() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        try! createCandidate(on: app.db, named: CANDIDATE)
+        
+        let voteRequest = VoteRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        
+        try app.test(.DELETE, "candidates", beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, .noContent)
         })
     }
 
@@ -91,22 +107,6 @@ class CandidateControllerTests: XCTestCase {
         })
     }
     
-    func testDeleteCandidate() throws {
-        let app = Application(.testing)
-        defer { app.shutdown() }
-        try! configure(app)
-        
-        try! createCandidate(on: app.db, named: CANDIDATE)
-        
-        let voteRequest = VoteRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
-        
-        try app.test(.DELETE, "candidates", beforeRequest: { req in
-            try req.content.encode(voteRequest)
-        }, afterResponse: { res in
-            XCTAssertEqual(res.status, .noContent)
-        })
-    }
-    
     func testDeleteNoneExistantCandidate() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
@@ -121,7 +121,7 @@ class CandidateControllerTests: XCTestCase {
         })
     }
     
-    func testSumVotes() throws {
+    func testSumVotesForCandidate() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
         try! configure(app)
@@ -146,25 +146,23 @@ class CandidateControllerTests: XCTestCase {
          }
     }
     
-    func createVotes(on db: Database, for candidate: String) throws -> [Vote] {
-        let votes = [
-            Vote(id: "1234", signature: "abcd", candidate: candidate, quantity: 10),
-            Vote(id: "4567", signature: "abcd", candidate: candidate, quantity: 10),
-            Vote(id: "890", signature: "abcd", candidate: candidate, quantity: 10)
+    func testListAllCandidates() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let candidateNames = [
+            "CANDIDATE ONE",
+            "CANDIDATE TWO",
+            "CANDIDATE THREE",
+            "CANDIDATE FOUR",
+            "CANDIDATE FIVE",
         ]
-        _ = try! votes.create(on: db).wait()
-        return votes
-    }
-
-    func createCandidate(on db: Database, named name: String) throws {
-        try Candidate(name: name).create(on: db).wait()
-    }
-    
-    func deleteCandidates(on db: Database) throws {
-        _ = try! Candidate.query(on: db).all()
-            .map {
-                $0.delete(on: db)
-            }
-            .wait()
+        let candidates = try! createCandidates(on: app.db, names: candidateNames)
+        
+        try app.test(.GET, "candidates") { res in
+            let returnedCandidates = try res.content.decode(Page<Candidate>.self)
+            XCTAssertEqual(returnedCandidates.items, candidates)
+         }
     }
 }

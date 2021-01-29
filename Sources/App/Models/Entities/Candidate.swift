@@ -21,3 +21,9 @@ final class Candidate: Model, Content {
     }
 }
 
+extension Candidate: Equatable {
+    static func == (lhs: Candidate, rhs: Candidate) -> Bool {
+        return lhs.id == rhs.id
+    }
+}
+

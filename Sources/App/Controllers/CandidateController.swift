@@ -12,20 +12,19 @@ struct CandidateController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let candidates = routes
             .grouped("candidates")
-            .grouped(VoteMiddleware())
         
         // Get
         candidates.get(use: listAllCandidates)
         
         // Admin required
-        candidates.group([SignatureAuthenticator(), AdminMiddleware(administrators: ["1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"])]) { protected in
+        candidates.group([VoteMiddleware(), SignatureAuthenticator(), AdminMiddleware(administrators: ["1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"])]) { protected in
             protected.post(use: create)
             protected.delete(use: delete)
         }
     }
     
-    func listAllCandidates(req: Request) throws -> EventLoopFuture<[Candidate]> {
-        return Candidate.query(on: req.db).all()
+    func listAllCandidates(req: Request) throws -> EventLoopFuture<Page<Candidate>> {
+        return Candidate.query(on: req.db).paginate(for: req)
     }
 
     func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {

@@ -134,7 +134,7 @@ final class AppTests: XCTestCase {
         // Create original vote
         let originalCandidate = "ORIGINAL CANDIDATE"
         try! createCandidate(on: app.db, named:originalCandidate)
-        try! createVote(on: app.db, from: REGULAR_ADDRESS, for: originalCandidate, with: QUANTITY)
+        try! createVote(on: app.db, from: REGULAR_ADDRESS, for: originalCandidate, with: QUANTITY, signature: SIGNATURE)
         
         // Create new candidate
         try! createCandidate(on: app.db, named: CANDIDATE)
@@ -175,9 +175,8 @@ final class AppTests: XCTestCase {
         let votes = try createVotes(on: app.db, for: CANDIDATE)
         try app.test(.GET, "votes/JOHN%20DOE") { res in
             XCTAssertEqual(res.status, .ok)
-            let listedVotes = try! res.content.decode([Vote].self)
-            
-            XCTAssertEqual(votes, listedVotes)
+            let listedVotes = try res.content.decode(Page<Vote>.self)
+            XCTAssertEqual(listedVotes.items, votes)
          }
     }
     
@@ -214,42 +213,5 @@ final class AppTests: XCTestCase {
         try app.test(.GET, "votes/JOHN%20DOE/sum") { res in
             XCTAssertEqual(res.status, .notFound)
          }
-    }
-    
-    
-    
-    func createCandidate(on db: Database, named name: String) throws {
-        try Candidate(name: name).create(on: db).wait()
-    }
-
-    func deleteCandidates(on db: Database) throws {
-        _ = try! Candidate.query(on: db).all()
-            .map {
-                $0.delete(on: db)
-            }
-            .wait()
-    }
-    
-    func createVote(on db: Database, from address: String, for candidate: String, with quantity: Double ) throws {
-        let vote = Vote(id: address, signature: SIGNATURE, candidate: candidate, quantity: quantity)
-        try! vote.save(on: db).wait()
-    }
-    
-    func createVotes(on db: Database, for candidate: String) throws -> [Vote] {
-        let votes = [
-            Vote(id: "1234", signature: "abcd", candidate: candidate, quantity: 10),
-            Vote(id: "4567", signature: "abcd", candidate: candidate, quantity: 10),
-            Vote(id: "890", signature: "abcd", candidate: candidate, quantity: 10)
-        ]
-        _ = try! votes.create(on: db).wait()
-        return votes
-    }
-    
-    func deleteVotes(on db: Database) throws {
-        _ = try! Vote.query(on: db).all()
-            .map {
-                $0.delete(on: db)
-            }
-            .wait()
     }
 }
