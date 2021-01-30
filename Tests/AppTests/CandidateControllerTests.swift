@@ -14,8 +14,15 @@ class CandidateControllerTests: XCTestCase {
     
     let ADMIN_ADDRESS = "1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"
     let REGULAR_ADDRESS = "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX"
+    let INVALID_ADDRESS = "0000"
     let CANDIDATE = "JOHN DOE"
+    let BAD_CANDIDATE_SYMBOLS = "JOHN_DOE"
+    let BAD_CANDIDATE_NUMBERS = "J0HN D0E"
+    let BAD_CANDIDATE_LOWERCASE = "john doe"
+    let NO_CANDIDATE = ""
     let SIGNATURE = "abcd"
+    
+    let pathUnderTest = "candidates"
 
     override func setUpWithError() throws {
         let app = Application(.testing)
@@ -38,10 +45,24 @@ class CandidateControllerTests: XCTestCase {
         
         let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
-        try app.test(.POST, "candidates", beforeRequest: { req in
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .created)
+        })
+    }
+    
+    func testAddCandidateInvalidAddress() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let candidateRequest = CandidateRequest(id: INVALID_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
+            try req.content.encode(candidateRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, .badRequest)
         })
     }
     
@@ -52,7 +73,7 @@ class CandidateControllerTests: XCTestCase {
         
         let candidateRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
-        try app.test(.POST, "candidates", beforeRequest: { req in
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, HTTPStatus.unauthorized)
@@ -68,10 +89,66 @@ class CandidateControllerTests: XCTestCase {
         
         let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
-        try app.test(.POST, "candidates", beforeRequest: { req in
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .notModified)
+        })
+    }
+    
+    func testAddEmptyCandidate() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: NO_CANDIDATE)
+        
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, HTTPStatus.badRequest)
+        })
+    }
+    
+    func testAddBadCandidateSymbols() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_SYMBOLS)
+        
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, HTTPStatus.badRequest)
+        })
+    }
+    
+    func testAddBadCandidateNumbers() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_NUMBERS)
+        
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, HTTPStatus.badRequest)
+        })
+    }
+    
+    func testAddBadCandidateLowercase() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_LOWERCASE)
+        
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, HTTPStatus.badRequest)
         })
     }
     
@@ -84,7 +161,7 @@ class CandidateControllerTests: XCTestCase {
         
         let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
-        try app.test(.DELETE, "candidates", beforeRequest: { req in
+        try app.test(.DELETE, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .noContent)
@@ -100,21 +177,21 @@ class CandidateControllerTests: XCTestCase {
         
         let candidateRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
-        try app.test(.DELETE, "candidates", beforeRequest: { req in
+        try app.test(.DELETE, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .unauthorized)
         })
     }
     
-    func testDeleteNoneExistantCandidate() throws {
+    func testDeleteNonExistantCandidate() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
         try! configure(app)
         
         let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
-        try app.test(.DELETE, "candidates", beforeRequest: { req in
+        try app.test(.DELETE, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .notFound)
@@ -160,7 +237,7 @@ class CandidateControllerTests: XCTestCase {
         ]
         let candidates = try! createCandidates(on: app.db, names: candidateNames)
         
-        try app.test(.GET, "candidates") { res in
+        try app.test(.GET, pathUnderTest) { res in
             let returnedCandidates = try res.content.decode(Page<Candidate>.self)
             XCTAssertEqual(returnedCandidates.items, candidates)
          }

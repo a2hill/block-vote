@@ -12,17 +12,17 @@ import Vapor
 
 class ValidatorTests: XCTestCase {
     
-    let validAddress = "1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"
-    let invalidAddress: String = "0000"
+    let VALID_ADDRESS = "1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"
+    let INVALID_ADDRESS: String = "0000"
 
     func testValidateAddress() throws {
-        let result = Validator.address.validate(validAddress)
+        let result = Validator.address.validate(VALID_ADDRESS)
         XCTAssertFalse(result.isFailure)
         XCTAssertNotNil(result.successDescription)
     }
     
     func testInvalidAddress() throws {
-        let result = Validator.address.validate(invalidAddress)
+        let result = Validator.address.validate(INVALID_ADDRESS)
         XCTAssertTrue(result.isFailure)
         XCTAssertNotNil(result.failureDescription)
     }
