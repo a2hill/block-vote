@@ -9,23 +9,31 @@ import Fluent
 import Vapor
 
 struct CandidateController: RouteCollection {
+    
+    private let adminAuthenticator: AdminMiddleware<CandidateRequest>
+    
+    init(adminAuthenticator: AdminMiddleware<CandidateRequest>) {
+        self.adminAuthenticator = adminAuthenticator
+    }
+    
     func boot(routes: RoutesBuilder) throws {
-        let candidates = routes.grouped("candidates")
+        let candidatesRoutes = routes.grouped("candidates")
         
         // Get
-        candidates.get(use: listAllCandidates)
+        candidatesRoutes.get(use: listAllCandidates)
         
         // Admin required
-        candidates.group([
+        let protectedRoutes = candidatesRoutes.grouped([
             CandidateMiddleware(),
             SignatureAuthenticator<CandidateRequest>(),
             CandidateRequest.guardMiddleware(throwing:
                 Abort(.unauthorized, reason: "Address, message, and signature do not match")
             ),
-            AdminMiddleware<CandidateRequest>(administrators: ["1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"])]) { protected in
-            protected.post(use: create)
-            protected.delete(use: delete)
-        }
+            adminAuthenticator
+        ])
+        
+        protectedRoutes.post(use: create)
+        protectedRoutes.delete(use: delete)
     }
     
     func listAllCandidates(req: Request) throws -> EventLoopFuture<Page<Candidate>> {
