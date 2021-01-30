@@ -7,6 +7,7 @@ final class AppTests: XCTestCase {
     
     let ADMIN_ADDRESS = "1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"
     let REGULAR_ADDRESS = "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX"
+    let BAD_ADDRESS = "000000"
     let SIGNATURE = "abcd"
     
     let CANDIDATE = "JOHN DOE"
@@ -98,6 +99,20 @@ final class AppTests: XCTestCase {
         try! configure(app)
         
         let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_LOWERCASE)
+        
+        try app.test(.POST, "votes", beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, HTTPStatus.badRequest)
+        })
+    }
+    
+    func testVoteBadAddress() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = VoteRequest(id: BAD_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
         try app.test(.POST, "votes", beforeRequest: { req in
             try req.content.encode(voteRequest)

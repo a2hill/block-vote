@@ -10,11 +10,12 @@ import Fluent
 
 struct VoteController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        let vote = routes
-            .grouped("votes")
+        let vote = routes.grouped("votes")
         
         // Get
         vote.get(use: listVotes)
+        
+        // Get by candidate
         vote.group(":candidate") { candidate in
             candidate.group("sum") { action in
                 action.get(use: sumAllVotesForCandidate)
@@ -23,7 +24,13 @@ struct VoteController: RouteCollection {
         }
         
         // Create
-        vote.group([VoteMiddleware(), SignatureAuthenticator(), VoteRequest.guardMiddleware(throwing: Abort(.unauthorized, reason: "Address, message, and signature do not match"))]) { protected in
+        vote.group([
+            VoteMiddleware(),
+            SignatureAuthenticator<VoteRequest>(),
+            VoteRequest.guardMiddleware(throwing:
+                Abort(.unauthorized, reason: "Address, message, and signature do not match")
+            )
+        ]) { protected in
             protected.post(use: create)
         }
     }

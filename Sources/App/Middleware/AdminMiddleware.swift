@@ -7,7 +7,8 @@
 
 import Vapor
 
-struct AdminMiddleware: Middleware {
+struct AdminMiddleware<T: SignedRequest>: Middleware {
+    typealias RequestType = T
     
     let administrators: [String]
     
@@ -16,8 +17,7 @@ struct AdminMiddleware: Middleware {
     }
 
    func respond(to request: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
-
-    guard let voteRequest = request.auth.get(VoteRequest.self), administrators.contains(voteRequest.id!) else {
+        guard let signedRequest = request.auth.get(RequestType.self), administrators.contains(signedRequest.id!) else {
             return request.eventLoop.future(error: Abort(.unauthorized))
         }
 

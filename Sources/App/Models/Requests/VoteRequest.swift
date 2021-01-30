@@ -7,20 +7,10 @@
 import Fluent
 import Vapor
 
-final class VoteRequest: Model, Content, Authenticatable {
-    
-    static let schema = "voteRequest"
-    
-    @ID(custom: "address", generatedBy: .user)
+final class VoteRequest: SignedRequest {
     var id: String?
-
-    @Field(key: "signature")
     var signature: String
-    
-    @Field(key: "candidate")
     var candidate: String
-
-    init() { }
 
     init(id: String, signature: String, candidate: String) {
         self.id = id

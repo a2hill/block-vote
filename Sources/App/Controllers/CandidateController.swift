@@ -10,14 +10,19 @@ import Vapor
 
 struct CandidateController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
-        let candidates = routes
-            .grouped("candidates")
+        let candidates = routes.grouped("candidates")
         
         // Get
         candidates.get(use: listAllCandidates)
         
         // Admin required
-        candidates.group([VoteMiddleware(), SignatureAuthenticator(), AdminMiddleware(administrators: ["1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"])]) { protected in
+        candidates.group([
+            CandidateMiddleware(),
+            SignatureAuthenticator<CandidateRequest>(),
+            CandidateRequest.guardMiddleware(throwing:
+                Abort(.unauthorized, reason: "Address, message, and signature do not match")
+            ),
+            AdminMiddleware<CandidateRequest>(administrators: ["1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"])]) { protected in
             protected.post(use: create)
             protected.delete(use: delete)
         }
@@ -28,7 +33,7 @@ struct CandidateController: RouteCollection {
     }
 
     func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
-        let voteRequest = try req.auth.require(VoteRequest.self)
+        let voteRequest = try req.auth.require(CandidateRequest.self)
         return try CanidateLogic.getCandidate(by: voteRequest.candidate, db: req.db)
             .guard({ $0 == nil }, else: Abort(.notModified, reason: "Candidate already exists"))
             .flatMap { _ in
@@ -37,7 +42,7 @@ struct CandidateController: RouteCollection {
     }
 
     func delete(req: Request) throws -> EventLoopFuture<HTTPStatus> {
-        let voteRequest = try req.auth.require(VoteRequest.self)
+        let voteRequest = try req.auth.require(CandidateRequest.self)
         let candidate = try CanidateLogic.getCandidate(by: voteRequest.candidate, db: req.db)
             .unwrap(or: Abort(.notFound, reason: "Candidate does not exist"))
         

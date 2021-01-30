@@ -8,9 +8,9 @@
 import Vapor
 
 
-struct SignatureAuthenticator: CredentialsAuthenticator {
+struct SignatureAuthenticator<T: SignedRequest>: CredentialsAuthenticator {
     
-    typealias Credentials = VoteRequest
+    typealias Credentials = T
     
     func authenticate(credentials: Credentials, for request: Request) -> EventLoopFuture<Void> {
         request.blockchain.validateMessage(address: credentials.id!, signature: credentials.signature, message: credentials.candidate)

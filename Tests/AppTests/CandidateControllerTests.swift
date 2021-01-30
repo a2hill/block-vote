@@ -36,10 +36,10 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = VoteRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
         try app.test(.POST, "candidates", beforeRequest: { req in
-            try req.content.encode(voteRequest)
+            try req.content.encode(candidateRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .created)
         })
@@ -50,10 +50,10 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
         try app.test(.POST, "candidates", beforeRequest: { req in
-            try req.content.encode(voteRequest)
+            try req.content.encode(candidateRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, HTTPStatus.unauthorized)
         })
@@ -66,10 +66,10 @@ class CandidateControllerTests: XCTestCase {
         
         try! createCandidate(on: app.db, named: CANDIDATE)
         
-        let voteRequest = VoteRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
         try app.test(.POST, "candidates", beforeRequest: { req in
-            try req.content.encode(voteRequest)
+            try req.content.encode(candidateRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .notModified)
         })
@@ -82,10 +82,10 @@ class CandidateControllerTests: XCTestCase {
         
         try! createCandidate(on: app.db, named: CANDIDATE)
         
-        let voteRequest = VoteRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
         try app.test(.DELETE, "candidates", beforeRequest: { req in
-            try req.content.encode(voteRequest)
+            try req.content.encode(candidateRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .noContent)
         })
@@ -98,10 +98,10 @@ class CandidateControllerTests: XCTestCase {
         
         try! createCandidate(on: app.db, named: CANDIDATE)
         
-        let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
         try app.test(.DELETE, "candidates", beforeRequest: { req in
-            try req.content.encode(voteRequest)
+            try req.content.encode(candidateRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .unauthorized)
         })
@@ -112,10 +112,10 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = VoteRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
         try app.test(.DELETE, "candidates", beforeRequest: { req in
-            try req.content.encode(voteRequest)
+            try req.content.encode(candidateRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .notFound)
         })
