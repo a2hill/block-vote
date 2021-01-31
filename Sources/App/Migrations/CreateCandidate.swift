@@ -11,6 +11,7 @@ struct CreateCandidate: Migration {
     func prepare(on database: Database) -> EventLoopFuture<Void> {
         return database.schema("candidates")
             .field("name", .string, .identifier(auto: false), .required)
+            .field("profileUrl", .string, .required)
             .create()
     }
 

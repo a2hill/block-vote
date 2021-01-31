@@ -8,13 +8,14 @@ final class AppTests: XCTestCase {
     let ADMIN_ADDRESS = "1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"
     let REGULAR_ADDRESS = "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX"
     let BAD_ADDRESS = "000000"
-    let SIGNATURE = "abcd"
     
     let CANDIDATE = "JOHN DOE"
     let BAD_CANDIDATE_SYMBOLS = "JOHN_DOE"
     let BAD_CANDIDATE_NUMBERS = "J0HN D0E"
     let BAD_CANDIDATE_LOWERCASE = "john doe"
     let NO_CANDIDATE = ""
+    
+    let SIGNATURE = "abcd"
     
     let QUANTITY = 22.22
     

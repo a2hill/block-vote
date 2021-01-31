@@ -41,12 +41,25 @@ struct CandidateController: RouteCollection {
     }
 
     func create(req: Request) throws -> EventLoopFuture<HTTPStatus> {
-        let voteRequest = try req.auth.require(CandidateRequest.self)
-        return try CanidateLogic.getCandidate(by: voteRequest.candidate, db: req.db)
-            .guard({ $0 == nil }, else: Abort(.notModified, reason: "Candidate already exists"))
-            .flatMap { _ in
-                Candidate(name: voteRequest.candidate).save(on: req.db)
-            }.transform(to: .created)
+        let candidateRequest = try req.auth.require(CandidateRequest.self)
+        
+        return try CanidateLogic.getCandidate(by: candidateRequest.candidate, db: req.db)
+            .flatMap { (existingCandidate: Candidate?) in
+                if let candidate = existingCandidate {
+                    guard candidate.profileUrl != candidateRequest.profileUrl else {
+                        return req.eventLoop.makeSucceededFuture(HTTPStatus.notModified)
+                    }
+                    if candidate.profileUrl != candidateRequest.profileUrl {
+                        candidate.profileUrl = candidateRequest.profileUrl
+                    }
+                    return candidate.update(on: req.db)
+                        .transform(to: HTTPStatus.noContent)
+                } else {
+                    return Candidate(name: candidateRequest.candidate, profileUrl: candidateRequest.profileUrl)
+                        .save(on: req.db)
+                        .transform(to: HTTPStatus.created)
+                }
+            }
     }
 
     func delete(req: Request) throws -> EventLoopFuture<HTTPStatus> {

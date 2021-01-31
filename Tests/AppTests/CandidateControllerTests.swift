@@ -15,12 +15,18 @@ class CandidateControllerTests: XCTestCase {
     let ADMIN_ADDRESS = "1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"
     let REGULAR_ADDRESS = "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX"
     let INVALID_ADDRESS = "0000"
+    
     let CANDIDATE = "JOHN DOE"
     let BAD_CANDIDATE_SYMBOLS = "JOHN_DOE"
     let BAD_CANDIDATE_NUMBERS = "J0HN D0E"
     let BAD_CANDIDATE_LOWERCASE = "john doe"
     let NO_CANDIDATE = ""
+    
     let SIGNATURE = "abcd"
+    let NO_SIGNATURE = ""
+    
+    let PROFILE_URL = "http://myprofile.com"
+    let NO_PROFILE_URL = "http://myprofile.com"
     
     let pathUnderTest = "candidates"
 
@@ -43,7 +49,7 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
@@ -57,7 +63,7 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let candidateRequest = CandidateRequest(id: INVALID_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: INVALID_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
@@ -71,7 +77,7 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let candidateRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
@@ -87,7 +93,7 @@ class CandidateControllerTests: XCTestCase {
         
         try! createCandidate(on: app.db, named: CANDIDATE)
         
-        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
@@ -101,7 +107,7 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: NO_CANDIDATE)
+        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: NO_CANDIDATE, profileUrl: PROFILE_URL)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
@@ -115,7 +121,7 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_SYMBOLS)
+        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_SYMBOLS, profileUrl: PROFILE_URL)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
@@ -129,7 +135,7 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_NUMBERS)
+        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_NUMBERS, profileUrl: PROFILE_URL)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
@@ -143,7 +149,7 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_LOWERCASE)
+        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_LOWERCASE, profileUrl: PROFILE_URL)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
@@ -159,7 +165,7 @@ class CandidateControllerTests: XCTestCase {
         
         try! createCandidate(on: app.db, named: CANDIDATE)
         
-        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL)
         
         try app.test(.DELETE, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
@@ -175,7 +181,7 @@ class CandidateControllerTests: XCTestCase {
         
         try! createCandidate(on: app.db, named: CANDIDATE)
         
-        let candidateRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL)
         
         try app.test(.DELETE, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
@@ -189,7 +195,7 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL)
         
         try app.test(.DELETE, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)
@@ -229,11 +235,11 @@ class CandidateControllerTests: XCTestCase {
         try! configure(app)
         
         let candidateNames = [
-            "CANDIDATE ONE",
-            "CANDIDATE TWO",
-            "CANDIDATE THREE",
-            "CANDIDATE FOUR",
-            "CANDIDATE FIVE",
+            "CANDIDATE ONE": PROFILE_URL,
+            "CANDIDATE TWO": PROFILE_URL,
+            "CANDIDATE THREE": PROFILE_URL,
+            "CANDIDATE FOUR": PROFILE_URL,
+            "CANDIDATE FIVE": PROFILE_URL
         ]
         let candidates = try! createCandidates(on: app.db, names: candidateNames)
         

@@ -9,12 +9,15 @@
 import Fluent
 import Foundation
 
-func createCandidate(on db: Database, named name: String) throws {
-    try Candidate(name: name).create(on: db).wait()
+func createCandidate(on db: Database, named name: String, with profileUrl: String = "http://myprofile.com") throws {
+    try Candidate(name: name, profileUrl: profileUrl).create(on: db).wait()
 }
 
-func createCandidates(on db: Database, names: [String]) throws -> [Candidate] {
-    let candidates = names.map { Candidate(name: $0) }
+func createCandidates(on db: Database, names: [String: String]) throws -> [Candidate] {
+    let candidates = names.map { key, value in
+        Candidate(name: key, profileUrl: value)
+        
+    }
     try! candidates.create(on: db).wait()
     
     return candidates

@@ -13,11 +13,15 @@ final class Candidate: Model, Content {
     
     @ID(custom: "name", generatedBy: .user)
     var id: String?
-
+    
+    @Field(key: "profileUrl")
+    var profileUrl: String
+    
     init() { }
 
-    init(name: String? = nil) {
+    init(name: String? = nil, profileUrl: String) {
         self.id = name
+        self.profileUrl = profileUrl
     }
 }
 
