@@ -9,7 +9,7 @@
 import Fluent
 import Foundation
 
-func createCandidate(on db: Database, named name: String, with profileUrl: String = "http://myprofile.com") throws {
+func createCandidate(on db: Database, named name: String, with profileUrl: String = "http://example.com") throws {
     try Candidate(name: name, profileUrl: profileUrl).create(on: db).wait()
 }
 

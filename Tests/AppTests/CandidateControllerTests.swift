@@ -25,8 +25,12 @@ class CandidateControllerTests: XCTestCase {
     let SIGNATURE = "abcd"
     let NO_SIGNATURE = ""
     
-    let PROFILE_URL = "http://myprofile.com"
-    let NO_PROFILE_URL = "http://myprofile.com"
+    let PROFILE_URL = "https://example.com"
+    let PROFILE_URL_NO_DOMAIN = "https://example"
+    let PROFILE_URL_IPFS = "ipfs://bafybeiemxf5abjwjbikoz4mc3a3dla6ual3jsgpdr4cjr3oz3evfyavhwq/wiki/Vincent_van_Gogh.html"
+    let INVALID_PROFILE_URL = "example"
+    let INVALID_PROFILE_URL_SCHEME = "ftp://example.com"
+    let NO_PROFILE_URL = ""
     
     let pathUnderTest = "candidates"
 
@@ -86,12 +90,32 @@ class CandidateControllerTests: XCTestCase {
         })
     }
     
+    func testUpdateCandidate() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let oldProfileUrl = "https://example-old.com"
+        
+        XCTAssertNotEqual(oldProfileUrl, PROFILE_URL)
+        
+        try! createCandidate(on: app.db, named: CANDIDATE, with: "")
+        
+        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL)
+        
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
+            try req.content.encode(candidateRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, .noContent)
+        })
+    }
+    
     func testAddDuplicateCandidate() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
         try! configure(app)
         
-        try! createCandidate(on: app.db, named: CANDIDATE)
+        try! createCandidate(on: app.db, named: CANDIDATE, with: PROFILE_URL)
         
         let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL)
         
@@ -107,7 +131,7 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: NO_CANDIDATE, profileUrl: PROFILE_URL)
+        let voteRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: NO_CANDIDATE, profileUrl: PROFILE_URL)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
@@ -121,7 +145,7 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_SYMBOLS, profileUrl: PROFILE_URL)
+        let voteRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_SYMBOLS, profileUrl: PROFILE_URL)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
@@ -135,7 +159,7 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_NUMBERS, profileUrl: PROFILE_URL)
+        let voteRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_NUMBERS, profileUrl: PROFILE_URL)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
@@ -149,7 +173,77 @@ class CandidateControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = CandidateRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_LOWERCASE, profileUrl: PROFILE_URL)
+        let voteRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_LOWERCASE, profileUrl: PROFILE_URL)
+        
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, HTTPStatus.badRequest)
+        })
+    }
+    
+    func testAddCandidateProfileNoDomain() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL_NO_DOMAIN)
+        
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
+            try req.content.encode(candidateRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, .created)
+        })
+    }
+    
+    func testAddCandidateProfileIpfs() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL_IPFS)
+        
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
+            try req.content.encode(candidateRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, .created)
+        })
+    }
+    
+    func testAddCandidateBadProfile() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: INVALID_PROFILE_URL)
+        
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, HTTPStatus.badRequest)
+        })
+    }
+    
+    func testAddCandidateNoProfile() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: NO_PROFILE_URL)
+        
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, HTTPStatus.badRequest)
+        })
+    }
+    
+    func testAddCandidateBadProfileScheme() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: INVALID_PROFILE_URL_SCHEME)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)

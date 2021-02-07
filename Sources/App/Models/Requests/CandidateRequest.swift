@@ -28,6 +28,6 @@ extension CandidateRequest: Validatable {
         validations.add("signature", as: String.self, is: .alphanumeric)
         validations.add("candidate", as: String.self, is: .candidate)
         validations.add("id", as: String.self, is: .address)
-        validations.add("profileUrl", as: String.self, is: .url)
+        validations.add("profileUrl", as: String.self, is: .url && .validScheme)
     }
 }

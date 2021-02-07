@@ -12,7 +12,5 @@ protocol SignedRequest: Content, Authenticatable {
     var id: String? { get set }
     var signature: String { get set }
     var candidate: String { get set }
-
-//    init(id: String, signature: String, candidate: String)
 }
 
