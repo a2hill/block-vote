@@ -26,9 +26,40 @@ public func configure(_ app: Application) throws {
     app.views.use(.leaf)
 
     // Auth
-    let candidateAdminAuthenticator = AdminMiddleware<CandidateRequest>(administrators: ["1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"])
+    let administratorAddresses = try ConfigUtils.readArray(
+        "adminAddresses",
+        validator: Validator.address,
+        error: ConfigurationError(.badAddress, reason: "Error configuring administrators: \(ConfigurationError.Value.badAddress.reasonPhrase)")
+    )
+    let candidateAdminAuthenticator = AdminMiddleware<CandidateRequest>(administrators: administratorAddresses)
+    
+    // Excluded voters
+    let excludedVoterAddresses = try ConfigUtils.readArray(
+        "excludedVoters",
+        validator: Validator.address,
+        error: ConfigurationError(.badAddress, reason: "Error configuring excluded voters: \(ConfigurationError.Value.badAddress.reasonPhrase)")
+    )
+    let excludedVotersMiddleware = ExcludedVotersMiddleware<VoteRequest>(excludedVoters: excludedVoterAddresses)
     
     // register routes
-    try app.register(collection: VoteController())
+    try app.register(collection: VoteController(excludedVotersMiddleware: excludedVotersMiddleware))
     try app.register(collection: CandidateController(adminAuthenticator: candidateAdminAuthenticator))
+}
+
+struct ConfigUtils {
+    public static func readArray(_ envVar: String, validator: Validator<String>, error: ConfigurationError) throws -> [String] {
+        let entries = Environment.get(envVar)?
+            .components(separatedBy: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            ?? []
+        
+        try entries.forEach {
+            let result = Validator.address.validate($0)
+            guard !result.isFailure else {
+                throw error
+            }
+        }
+        
+        return entries
+    }
 }

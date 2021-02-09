@@ -26,6 +26,7 @@ class CandidateControllerTests: XCTestCase {
     let NO_SIGNATURE = ""
     
     let PROFILE_URL = "https://example.com"
+    let PROFILE_URL_HTTP = "https://example.com"
     let PROFILE_URL_NO_DOMAIN = "https://example"
     let PROFILE_URL_IPFS = "ipfs://bafybeiemxf5abjwjbikoz4mc3a3dla6ual3jsgpdr4cjr3oz3evfyavhwq/wiki/Vincent_van_Gogh.html"
     let INVALID_PROFILE_URL = "example"
@@ -188,6 +189,20 @@ class CandidateControllerTests: XCTestCase {
         try! configure(app)
         
         let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL_NO_DOMAIN)
+        
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
+            try req.content.encode(candidateRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, .created)
+        })
+    }
+    
+    func testAddCandidateProfileHttp() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let candidateRequest = CandidateRequest(id: ADMIN_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE, profileUrl: PROFILE_URL_HTTP)
         
         try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(candidateRequest)

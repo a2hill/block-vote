@@ -3,10 +3,12 @@ import XCTVapor
 import Fluent
 import Vapor
 
-final class AppTests: XCTestCase {
+final class VoteControllerTests: XCTestCase {
     
     let ADMIN_ADDRESS = "1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"
     let REGULAR_ADDRESS = "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX"
+    let EXCLUDED_ADDRESS_1 = "1NDyJtNTjmwk5xPNhjgAMu4HDHigtobu1s"
+    let EXCLUDED_ADDRESS_2 = "12KkeeRkiNS13GMbg7zos9KRn9ggvZtZgx"
     let BAD_ADDRESS = "000000"
     
     let CANDIDATE = "JOHN DOE"
@@ -119,6 +121,20 @@ final class AppTests: XCTestCase {
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, HTTPStatus.badRequest)
+        })
+    }
+    
+    func testVoteExcludedAddress() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try! configure(app)
+        
+        let voteRequest = VoteRequest(id: EXCLUDED_ADDRESS_1, signature: SIGNATURE, candidate: CANDIDATE)
+        
+        try app.test(.POST, "votes", beforeRequest: { req in
+            try req.content.encode(voteRequest)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, HTTPStatus.unauthorized)
         })
     }
     

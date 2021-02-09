@@ -9,6 +9,13 @@ import Vapor
 import Fluent
 
 struct VoteController: RouteCollection {
+    
+    private let excludedVotersMiddleware: ExcludedVotersMiddleware<VoteRequest>
+    
+    init(excludedVotersMiddleware: ExcludedVotersMiddleware<VoteRequest>) {
+        self.excludedVotersMiddleware = excludedVotersMiddleware
+    }
+    
     func boot(routes: RoutesBuilder) throws {
         let vote = routes.grouped("votes")
         
@@ -27,6 +34,7 @@ struct VoteController: RouteCollection {
         vote.group([
             VoteMiddleware(),
             SignatureAuthenticator<VoteRequest>(),
+            excludedVotersMiddleware,
             VoteRequest.guardMiddleware(throwing:
                 Abort(.unauthorized, reason: "Address, message, and signature do not match")
             )

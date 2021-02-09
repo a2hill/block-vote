@@ -116,6 +116,27 @@
           }
         },
         {
+          "name": "admin validate example 2",
+          "params": [
+            {
+              "name": "address",
+              "value": "12T4oSNd4t9ty9fodgNd47TWhK35pAxDYN"
+            },
+            {
+              "name": "signature",
+              "value": "abcd"
+            },
+            {
+              "name": "candidate",
+              "value": "JOHN DOE"
+            }
+          ],
+          "result": {
+            "name": "verified",
+            "value": true
+          }
+        },
+        {
           "name": "regular validate example",
           "params": [
             {
@@ -150,6 +171,48 @@
             {
               "name": "candidate",
               "value": ""
+            }
+          ],
+          "result": {
+            "name": "verified",
+            "value": true
+          }
+        },
+        {
+          "name": "excluded validate example",
+          "params": [
+            {
+              "name": "address",
+              "value": "1NDyJtNTjmwk5xPNhjgAMu4HDHigtobu1s"
+            },
+            {
+              "name": "signature",
+              "value": "abcd"
+            },
+            {
+              "name": "candidate",
+              "value": "JOHN DOE"
+            }
+          ],
+          "result": {
+            "name": "verified",
+            "value": true
+          }
+        },
+        {
+          "name": "excluded validate example 2",
+          "params": [
+            {
+              "name": "address",
+              "value": "12KkeeRkiNS13GMbg7zos9KRn9ggvZtZgx"
+            },
+            {
+              "name": "signature",
+              "value": "abcd"
+            },
+            {
+              "name": "candidate",
+              "value": "JOHN DOE"
             }
           ],
           "result": {
