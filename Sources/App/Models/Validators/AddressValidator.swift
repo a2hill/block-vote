@@ -11,8 +11,12 @@ import Base58Swift
 extension Validator where T == String {
     public static var address: Validator = base58Check
     public static var base58Check: Validator {
-        .init {
-            ValidatorResults.Base58(bytes: Base58.base58CheckDecode($0))
+        .init { base58CCheckString in
+            var results: [UInt8]? = nil
+            if !base58CCheckString.isEmpty {
+                results = Base58.base58CheckDecode(base58CCheckString)
+            }
+            return ValidatorResults.Base58(bytes: results)
         }
     }
 }

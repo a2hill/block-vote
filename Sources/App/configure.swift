@@ -31,6 +31,10 @@ public func configure(_ app: Application) throws {
         validator: Validator.address,
         error: ConfigurationError(.badAddress, reason: "Error configuring administrators: \(ConfigurationError.Value.badAddress.reasonPhrase)")
     )
+    // require at least one admin address, otherwise the service is useless
+    guard administratorAddresses.count > 0 else {
+        throw ConfigurationError(.noAdmin)
+    }
     let candidateAdminAuthenticator = AdminMiddleware<CandidateRequest>(administrators: administratorAddresses)
     
     // Excluded voters
@@ -54,7 +58,7 @@ struct ConfigUtils {
             ?? []
         
         try entries.forEach {
-            let result = Validator.address.validate($0)
+            let result = validator.validate($0)
             guard !result.isFailure else {
                 throw error
             }

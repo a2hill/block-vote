@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  CandidateController.swift
 //  
 //
 //  Created by Austin Hill on 1/5/21.
@@ -24,12 +24,12 @@ struct CandidateController: RouteCollection {
         
         // Admin required
         let protectedRoutes = candidatesRoutes.grouped([
-            CandidateMiddleware(),
-            SignatureAuthenticator<CandidateRequest>(),
-            CandidateRequest.guardMiddleware(throwing:
+            CandidateMiddleware(), // Validates that the request is a CandidateRequest
+            SignatureAuthenticator<CandidateRequest>(), // Validates the signature and adds the address as an authenticated address
+            CandidateRequest.guardMiddleware(throwing: // Validates that the request contains an authenticated address
                 Abort(.unauthorized, reason: "Address, message, and signature do not match")
             ),
-            adminAuthenticator
+            adminAuthenticator // Validates that the authenticated address is an administrator
         ])
         
         protectedRoutes.post(use: create)

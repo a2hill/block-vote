@@ -5,20 +5,6 @@ import Vapor
 
 final class VoteControllerTests: XCTestCase {
     
-    let ADMIN_ADDRESS = "1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"
-    let REGULAR_ADDRESS = "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX"
-    let EXCLUDED_ADDRESS_1 = "1NDyJtNTjmwk5xPNhjgAMu4HDHigtobu1s"
-    let EXCLUDED_ADDRESS_2 = "12KkeeRkiNS13GMbg7zos9KRn9ggvZtZgx"
-    let BAD_ADDRESS = "000000"
-    
-    let CANDIDATE = "JOHN DOE"
-    let BAD_CANDIDATE_SYMBOLS = "JOHN_DOE"
-    let BAD_CANDIDATE_NUMBERS = "J0HN D0E"
-    let BAD_CANDIDATE_LOWERCASE = "john doe"
-    let NO_CANDIDATE = ""
-    
-    let SIGNATURE = "abcd"
-    
     let QUANTITY = 22.22
     
     override func setUp() {
@@ -115,7 +101,7 @@ final class VoteControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        let voteRequest = VoteRequest(id: BAD_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
+        let voteRequest = VoteRequest(id: INVALID_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
         try app.test(.POST, "votes", beforeRequest: { req in
             try req.content.encode(voteRequest)
@@ -127,6 +113,7 @@ final class VoteControllerTests: XCTestCase {
     func testVoteExcludedAddress() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
+        Environment.process.excludedVoters = EXCLUDED_ADDRESS_1
         try! configure(app)
         
         let voteRequest = VoteRequest(id: EXCLUDED_ADDRESS_1, signature: SIGNATURE, candidate: CANDIDATE)

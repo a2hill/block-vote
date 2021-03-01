@@ -9,10 +9,12 @@ import Vapor
 public struct ConfigurationError: DebuggableError {
     enum Value: String {
         case badAddress
+        case noAdmin
         
         var reasonPhrase: String {
             switch self {
             case .badAddress: return "The supplied address is not a valid Base58Check address"
+            case .noAdmin: return "You must supply at least one admin address"
             }
         }
     }

@@ -12,16 +12,13 @@ import Vapor
 
 class ValidatorTests: XCTestCase {
     
-    let VALID_ADDRESS = "1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"
-    let INVALID_ADDRESS: String = "0000"
-    
     let VALID_URL_HTTPS = "https://example.com"
     let VALID_URL_HTTP = "https://example.com"
     let VALID_URL_IPFS = "ipfs://example.com"
     let INVALID_URL_FTP = "ftp://example.com"
 
     func testValidateAddress() throws {
-        let result = Validator.address.validate(VALID_ADDRESS)
+        let result = Validator.address.validate(REGULAR_ADDRESS)
         XCTAssertFalse(result.isFailure)
         XCTAssertNotNil(result.successDescription)
     }

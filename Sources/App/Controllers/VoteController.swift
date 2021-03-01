@@ -32,12 +32,12 @@ struct VoteController: RouteCollection {
         
         // Create
         vote.group([
-            VoteMiddleware(),
-            SignatureAuthenticator<VoteRequest>(),
-            excludedVotersMiddleware,
-            VoteRequest.guardMiddleware(throwing:
+            VoteMiddleware(), // Validates that the request is a VoteRequest
+            SignatureAuthenticator<VoteRequest>(), // Validates the signature and adds the address as an authenticated address
+            VoteRequest.guardMiddleware(throwing: // Validates that the request contains an authenticated address
                 Abort(.unauthorized, reason: "Address, message, and signature do not match")
-            )
+            ),
+            excludedVotersMiddleware // Validates that the authenticated address is not an excluded address
         ]) { protected in
             protected.post(use: create)
         }

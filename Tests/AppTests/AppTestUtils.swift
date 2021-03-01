@@ -6,8 +6,26 @@
 //
 
 @testable import App
+import Vapor
 import Fluent
 import Foundation
+
+let ADMIN_ADDRESS_1 = "1CdPoF9cvw3YEiuRCHxdsGpvb5tSUYBBo"
+let ADMIN_ADDRESS_2 = "12T4oSNd4t9ty9fodgNd47TWhK35pAxDYN"
+let REGULAR_ADDRESS = "1F1tAaz5x1HUXrCNLbtMDqcw6o5GNn4xqX"
+let EXCLUDED_ADDRESS_1 = "1NDyJtNTjmwk5xPNhjgAMu4HDHigtobu1s"
+let EXCLUDED_ADDRESS_2 = "12KkeeRkiNS13GMbg7zos9KRn9ggvZtZgx"
+let INVALID_ADDRESS = "000000"
+let EMPTY_ADDRESS = ""
+
+let CANDIDATE = "JOHN DOE"
+let BAD_CANDIDATE_SYMBOLS = "JOHN_DOE"
+let BAD_CANDIDATE_NUMBERS = "J0HN D0E"
+let BAD_CANDIDATE_LOWERCASE = "john doe"
+let NO_CANDIDATE = ""
+
+let SIGNATURE = "abcd"
+let NO_SIGNATURE = ""
 
 func createCandidate(on db: Database, named name: String, with profileUrl: String = "http://example.com") throws {
     try Candidate(name: name, profileUrl: profileUrl).create(on: db).wait()
@@ -52,4 +70,25 @@ func deleteVotes(on db: Database) throws {
             $0.delete(on: db)
         }
         .wait()
+}
+
+func clearAppState(application: Application) throws {
+    try! setupTestEnvironment(application: application)
+    try! configure(application)
+    
+    // Clear db
+    try! deleteCandidates(on: application.db)
+    try! deleteVotes(on: application.db)
+    
+    // Clear config process vars
+    try! clearTestEnvironment(application: application)
+}
+
+func setupTestEnvironment(application: Application) throws {
+    try! clearTestEnvironment(application: application)
+    Environment.process.adminAddresses = ADMIN_ADDRESS_1
+}
+
+func clearTestEnvironment(application: Application) throws {
+    Environment.process.excludedVoters = nil
 }
