@@ -12,29 +12,18 @@ import Vapor
 
 class CandidateControllerTests: XCTestCase {
     
-    let PROFILE_URL = "https://example.com"
-    let PROFILE_URL_HTTP = "https://example.com"
-    let PROFILE_URL_NO_DOMAIN = "https://example"
-    let PROFILE_URL_IPFS = "ipfs://bafybeiemxf5abjwjbikoz4mc3a3dla6ual3jsgpdr4cjr3oz3evfyavhwq/wiki/Vincent_van_Gogh.html"
-    let INVALID_PROFILE_URL = "example"
-    let INVALID_PROFILE_URL_SCHEME = "ftp://example.com"
-    let NO_PROFILE_URL = ""
-    
     let pathUnderTest = "candidates"
 
     override func setUpWithError() throws {
-        Environment.process.adminAddresses = ADMIN_ADDRESS_1
         let app = Application(.testing)
         defer { app.shutdown() }
-        try! configure(app)
-        try! deleteCandidates(on: app.db)
+        try! setupTestEnvironment(application: app)
     }
 
     override func tearDownWithError() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
-        try! configure(app)
-        try! deleteCandidates(on: app.db)
+        try! clearAppState(application: app)
     }
     
     func testAddCandidate() throws {

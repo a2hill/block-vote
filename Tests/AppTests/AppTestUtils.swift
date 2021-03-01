@@ -27,6 +27,14 @@ let NO_CANDIDATE = ""
 let SIGNATURE = "abcd"
 let NO_SIGNATURE = ""
 
+let PROFILE_URL = "https://example.com"
+let PROFILE_URL_HTTP = "https://example.com"
+let PROFILE_URL_NO_DOMAIN = "https://example"
+let PROFILE_URL_IPFS = "ipfs://bafybeiemxf5abjwjbikoz4mc3a3dla6ual3jsgpdr4cjr3oz3evfyavhwq/wiki/Vincent_van_Gogh.html"
+let INVALID_PROFILE_URL = "example"
+let INVALID_PROFILE_URL_SCHEME = "ftp://example.com"
+let NO_PROFILE_URL = ""
+
 func createCandidate(on db: Database, named name: String, with profileUrl: String = "http://example.com") throws {
     try Candidate(name: name, profileUrl: profileUrl).create(on: db).wait()
 }

@@ -6,23 +6,18 @@ import Vapor
 final class VoteControllerTests: XCTestCase {
     
     let QUANTITY = 22.22
+    let pathUnderTest = "votes"
     
-    override func setUp() {
+    override func setUpWithError() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
-        try! configure(app)
-        
-        try! deleteVotes(on: app.db)
-        try! deleteCandidates(on: app.db)
+        try! setupTestEnvironment(application: app)
     }
-    
-    override func tearDown() {
+
+    override func tearDownWithError() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
-        try! configure(app)
-        
-        try! deleteVotes(on: app.db)
-        try! deleteCandidates(on: app.db)
+        try! clearAppState(application: app)
     }
     
     // Requires running `npm run mock-servernode --verion` first. node ~v10.15.0
@@ -33,7 +28,7 @@ final class VoteControllerTests: XCTestCase {
         
         let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
-        try app.test(.POST, "votes", beforeRequest: { req in
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .notFound)
@@ -47,7 +42,7 @@ final class VoteControllerTests: XCTestCase {
         
         let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: NO_CANDIDATE)
         
-        try app.test(.POST, "votes", beforeRequest: { req in
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, HTTPStatus.badRequest)
@@ -61,7 +56,7 @@ final class VoteControllerTests: XCTestCase {
         
         let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_SYMBOLS)
         
-        try app.test(.POST, "votes", beforeRequest: { req in
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, HTTPStatus.badRequest)
@@ -75,7 +70,7 @@ final class VoteControllerTests: XCTestCase {
         
         let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_NUMBERS)
         
-        try app.test(.POST, "votes", beforeRequest: { req in
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, HTTPStatus.badRequest)
@@ -89,7 +84,7 @@ final class VoteControllerTests: XCTestCase {
         
         let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: BAD_CANDIDATE_LOWERCASE)
         
-        try app.test(.POST, "votes", beforeRequest: { req in
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, HTTPStatus.badRequest)
@@ -103,7 +98,7 @@ final class VoteControllerTests: XCTestCase {
         
         let voteRequest = VoteRequest(id: INVALID_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         
-        try app.test(.POST, "votes", beforeRequest: { req in
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, HTTPStatus.badRequest)
@@ -118,7 +113,7 @@ final class VoteControllerTests: XCTestCase {
         
         let voteRequest = VoteRequest(id: EXCLUDED_ADDRESS_1, signature: SIGNATURE, candidate: CANDIDATE)
         
-        try app.test(.POST, "votes", beforeRequest: { req in
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, HTTPStatus.unauthorized)
@@ -136,7 +131,7 @@ final class VoteControllerTests: XCTestCase {
         let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         let voteResponse = Vote(voteRequest, quantity: QUANTITY)
         
-        try app.test(.POST, "votes", beforeRequest: { req in
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             XCTAssertEqual(res.status, .ok)
@@ -162,7 +157,7 @@ final class VoteControllerTests: XCTestCase {
         let voteRequest = VoteRequest(id: REGULAR_ADDRESS, signature: SIGNATURE, candidate: CANDIDATE)
         let voteResponse = Vote(voteRequest, quantity: QUANTITY)
         
-        try app.test(.POST, "votes", beforeRequest: { req in
+        try app.test(.POST, pathUnderTest, beforeRequest: { req in
             try req.content.encode(voteRequest)
         }, afterResponse: { res in
             let returnedVote = try res.content.decode(Vote.self)
@@ -176,7 +171,7 @@ final class VoteControllerTests: XCTestCase {
         try! configure(app)
         
         let votes = try createVotes(on: app.db, for: CANDIDATE)
-        try app.test(.GET, "votes") { res in
+        try app.test(.GET, pathUnderTest) { res in
             XCTAssertEqual(res.status, .ok)
             let returnedVotes = try res.content.decode(Page<Vote>.self)
             XCTAssertEqual(returnedVotes.items, votes)
@@ -192,7 +187,7 @@ final class VoteControllerTests: XCTestCase {
         
         try createCandidate(on: app.db, named: CANDIDATE)
         let votes = try createVotes(on: app.db, for: CANDIDATE)
-        try app.test(.GET, "votes/JOHN%20DOE") { res in
+        try app.test(.GET, "\(pathUnderTest)/JOHN%20DOE") { res in
             XCTAssertEqual(res.status, .ok)
             let listedVotes = try res.content.decode(Page<Vote>.self)
             XCTAssertEqual(listedVotes.items, votes)
@@ -204,7 +199,7 @@ final class VoteControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        try app.test(.GET, "votes/JOHN%20DOE") { res in
+        try app.test(.GET, "\(pathUnderTest)/JOHN%20DOE") { res in
             XCTAssertEqual(res.status, .notFound)
          }
     }
@@ -229,7 +224,7 @@ final class VoteControllerTests: XCTestCase {
         defer { app.shutdown() }
         try! configure(app)
         
-        try app.test(.GET, "votes/JOHN%20DOE/sum") { res in
+        try app.test(.GET, "\(pathUnderTest)/JOHN%20DOE/sum") { res in
             XCTAssertEqual(res.status, .notFound)
          }
     }

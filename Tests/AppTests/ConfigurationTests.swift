@@ -11,11 +11,6 @@ import Vapor
 
 class ConfigurationTests: XCTestCase {
     
-    let PROFILE_URL = "https://example.com"
-    
-    let SIGNATURE = "abcd"
-    let CANDIDATE = "JOHN DOE"
-    
     override func setUpWithError() throws {
         let app = Application(.testing)
         defer { app.shutdown() }
