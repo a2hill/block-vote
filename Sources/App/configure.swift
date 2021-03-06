@@ -1,5 +1,7 @@
 import Fluent
 import FluentPostgresDriver
+import QueuesFluentDriver
+import Queues
 import Leaf
 import Vapor
 
@@ -20,7 +22,20 @@ public func configure(_ app: Application) throws {
     // Migrations
     app.migrations.add(CreateVote())
     app.migrations.add(CreateCandidate())
+    app.migrations.add(JobModelMigrate()) // Vapor Queues, used for scheduled jobs
     try app.autoMigrate().wait()
+    
+    // Scheduled jobs
+    app.queues.use(.fluent())
+    if app.environment == .production {
+        if #available(OSX 10.15.4, *) {
+            app.queues.schedule(ExportJob(filePath: "./votes.csv"))
+                .hourly()
+                .at(0)
+        } else {
+            throw ConfigurationError(.minVersion)
+        }
+    }
     
     // Frontend
     app.views.use(.leaf)

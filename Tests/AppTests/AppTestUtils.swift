@@ -68,7 +68,7 @@ func createVotes(on db: Database, for candidate: String) throws -> [Vote] {
         Vote(id: "4567", signature: "abcd", candidate: candidate, quantity: 10),
         Vote(id: "890", signature: "abcd", candidate: candidate, quantity: 10)
     ]
-    _ = try! votes.create(on: db).wait()
+    _ = try votes.create(on: db).wait()
     return votes
 }
 
