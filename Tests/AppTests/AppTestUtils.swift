@@ -72,6 +72,16 @@ func createVotes(on db: Database, for candidate: String) throws -> [Vote] {
     return votes
 }
 
+func createVotes(on db: Database, numberOfVotes: Int, for candidate: String) throws -> [Vote] {
+    var votes: [Vote] = []
+    for id in 0...numberOfVotes {
+        votes.append(Vote(id: String(REGULAR_ADDRESS) + String(id), signature: "abcd", candidate: candidate, quantity: 10))
+    }
+    
+    _ = try votes.create(on: db).wait()
+    return votes
+}
+
 func deleteVotes(on db: Database) throws {
     _ = try! Vote.query(on: db).all()
         .map {

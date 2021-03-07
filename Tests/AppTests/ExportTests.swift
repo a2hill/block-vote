@@ -17,7 +17,8 @@ class ExportTests: XCTestCase {
     
     let fileManager = FileManager()
     let outputPath = "./votes.csv"
-    let csvExportDelaySeconds: Int64 = 10
+    let scheduleJobDelay = 1.0
+    let csvExportDelaySeconds: Int64 = 3
     
     override func setUpWithError() throws {
         let app = Application(.testing)
@@ -85,7 +86,34 @@ class ExportTests: XCTestCase {
         
         let votes = try createVotes(on: app.db, for: "test")
         
-        app.queues.schedule(ExportJob(filePath: outputPath)).at(Date().addingTimeInterval(2.0))
+        app.queues.schedule(ExportJob(filePath: outputPath)).at(Date().addingTimeInterval(scheduleJobDelay))
+        try app.queues.startScheduledJobs()
+        
+        let promise = app.eventLoopGroup.next().makePromise(of: Void.self)
+        app.eventLoopGroup.next().scheduleTask(in: .seconds(csvExportDelaySeconds)) { () -> Void in
+            let countFuture = Vote.query(on: app.db).all().map {
+                $0.count
+            }
+            let _ = countFuture.flatMapThrowing { [weak self] voteCount in
+                XCTAssertEqual(votes.count, voteCount, "Santiy check: Uh oh, these should be equal, check your DB")
+                let fileContent = try String(contentsOf: URL(fileURLWithPath: self!.outputPath))
+                let lines = fileContent.split(separator: "\n").count - ExportTests.HEADER_LENGTH
+                XCTAssertEqual(lines, voteCount)
+                promise.succeed(())
+            }
+        }
+        
+        try promise.futureResult.wait()
+    }
+    
+    func testExportManyVotes() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try configure(app)
+        
+        let votes = try createVotes(on: app.db, numberOfVotes: 1000, for: "test")
+        
+        app.queues.schedule(ExportJob(filePath: outputPath)).at(Date().addingTimeInterval(scheduleJobDelay))
         try app.queues.startScheduledJobs()
         
         let promise = app.eventLoopGroup.next().makePromise(of: Void.self)
@@ -110,7 +138,7 @@ class ExportTests: XCTestCase {
         defer { app.shutdown() }
         try configure(app)
         
-        app.queues.schedule(ExportJob(filePath: outputPath)).at(Date().addingTimeInterval(2.0))
+        app.queues.schedule(ExportJob(filePath: outputPath)).at(Date().addingTimeInterval(scheduleJobDelay))
         try app.queues.startScheduledJobs()
         
         let promise = app.eventLoopGroup.next().makePromise(of: Void.self)
@@ -119,6 +147,62 @@ class ExportTests: XCTestCase {
                 $0.count
             }
             let _ = countFuture.flatMapThrowing { [weak self] voteCount in
+                let fileContent = try String(contentsOf: URL(fileURLWithPath: self!.outputPath))
+                let lines = fileContent.split(separator: "\n").count - ExportTests.HEADER_LENGTH
+                XCTAssertEqual(lines, voteCount)
+                promise.succeed(())
+            }
+        }
+        
+        try promise.futureResult.wait()
+    }
+    
+    func testExportExistingFile() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try configure(app)
+        
+        let _ = createFile()
+        let votes = try createVotes(on: app.db, for: "test")
+        
+        app.queues.schedule(ExportJob(filePath: outputPath)).at(Date().addingTimeInterval(scheduleJobDelay))
+        try app.queues.startScheduledJobs()
+        
+        let promise = app.eventLoopGroup.next().makePromise(of: Void.self)
+        app.eventLoopGroup.next().scheduleTask(in: .seconds(csvExportDelaySeconds)) { () -> Void in
+            let countFuture = Vote.query(on: app.db).all().map {
+                $0.count
+            }
+            let _ = countFuture.flatMapThrowing { [weak self] voteCount in
+                XCTAssertEqual(votes.count, voteCount, "Santiy check: Uh oh, these should be equal, check your DB")
+                let fileContent = try String(contentsOf: URL(fileURLWithPath: self!.outputPath))
+                let lines = fileContent.split(separator: "\n").count - ExportTests.HEADER_LENGTH
+                XCTAssertEqual(lines, voteCount)
+                promise.succeed(())
+            }
+        }
+        
+        try promise.futureResult.wait()
+    }
+    
+    func testExportExistingFileWithData() throws {
+        let app = Application(.testing)
+        defer { app.shutdown() }
+        try configure(app)
+        
+        let votes = try createVotes(on: app.db, for: "test")
+        
+        app.queues.schedule(ExportJob(filePath: outputPath)).at(Date().addingTimeInterval(scheduleJobDelay))
+        app.queues.schedule(ExportJob(filePath: outputPath)).at(Date().addingTimeInterval(scheduleJobDelay + scheduleJobDelay))
+        try app.queues.startScheduledJobs()
+        
+        let promise = app.eventLoopGroup.next().makePromise(of: Void.self)
+        app.eventLoopGroup.next().scheduleTask(in: .seconds(csvExportDelaySeconds)) { () -> Void in
+            let countFuture = Vote.query(on: app.db).all().map {
+                $0.count
+            }
+            let _ = countFuture.flatMapThrowing { [weak self] voteCount in
+                XCTAssertEqual(votes.count, voteCount, "Santiy check: Uh oh, these should be equal, check your DB")
                 let fileContent = try String(contentsOf: URL(fileURLWithPath: self!.outputPath))
                 let lines = fileContent.split(separator: "\n").count - ExportTests.HEADER_LENGTH
                 XCTAssertEqual(lines, voteCount)
